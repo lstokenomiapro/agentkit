@@ -1,7 +1,7 @@
 {
-  "name": "@coinbase/agentkit",
+  "name": "@tokenomiapro/agentkit",
   "description": "Coinbase AgentKit core primitives",
-  "repository": "https://github.com/coinbase/agentkit",
+  "repository": "https://github.com/lstokenomiapro/agentkit",
   "version": "0.7.0",
   "author": "Coinbase Inc.",
   "license": "Apache-2.0",
