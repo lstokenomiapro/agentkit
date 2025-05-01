@@ -156,16 +156,24 @@ export class SplActionProvider extends ActionProvider<SvmWalletProvider> {
         ),
       );
 
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+
       const tx = new VersionedTransaction(
         MessageV0.compile({
           payerKey: fromPubkey,
           instructions: instructions,
-          recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+          recentBlockhash: blockhash
         }),
       );
 
-      const signature = await walletProvider.signAndSendTransaction(tx);
-      await walletProvider.waitForSignatureResult(signature);
+      const signedTransaction = await walletProvider.signTransaction(tx);
+      const signature = await walletProvider.getConnection().sendTransaction(signedTransaction);
+      
+      await walletProvider.getConnection().confirmTransaction({
+        signature: signature,
+        lastValidBlockHeight,
+        blockhash,
+      });
 
       return [
         `Successfully transferred ${args.amount} tokens to ${args.recipient}`,

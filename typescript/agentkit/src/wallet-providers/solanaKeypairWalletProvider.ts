@@ -309,18 +309,26 @@ export class SolanaKeypairWalletProvider extends SvmWalletProvider {
       }),
     ];
 
+    const { blockhash, lastValidBlockHeight } = await this.#connection.getLatestBlockhash();
+
     const tx = new VersionedTransaction(
       MessageV0.compile({
         payerKey: this.#keypair.publicKey,
         instructions: instructions,
-        recentBlockhash: (await this.#connection.getLatestBlockhash()).blockhash,
+        recentBlockhash: blockhash
       }),
     );
 
     tx.sign([this.#keypair]);
 
     const signature = await this.#connection.sendTransaction(tx);
-    await this.waitForSignatureResult(signature);
+
+    await this.#connection.confirmTransaction({
+      signature: signature,
+      lastValidBlockHeight,
+      blockhash,
+    });
+
     return signature;
   }
 
