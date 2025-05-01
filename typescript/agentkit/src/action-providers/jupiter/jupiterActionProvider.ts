@@ -46,13 +46,17 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const inputMint = new PublicKey(args.inputMint);
       const outputMint = new PublicKey(args.outputMint);
 
-      const { getMint } = await import("@solana/spl-token");
+      const { getMint, TOKEN_2022_PROGRAM_ID, TokenInvalidAccountOwnerError } = await import("@solana/spl-token");
 
       let mintInfo: Awaited<ReturnType<typeof getMint>>;
       try {
         mintInfo = await getMint(walletProvider.getConnection(), inputMint);
       } catch (error) {
-        return `Failed to fetch mint info for mint address ${args.inputMint}. Error: ${error}`;
+        if (error instanceof TokenInvalidAccountOwnerError) {
+          mintInfo = await getMint(walletProvider.getConnection(), inputMint, "finalized", TOKEN_2022_PROGRAM_ID);
+        } else {
+          return `Failed to fetch mint info for mint address ${args.inputMint}. Error: ${error}`;
+        }
       }
       const amount = args.amount * 10 ** mintInfo.decimals;
 
@@ -83,9 +87,21 @@ export class JupiterActionProvider extends ActionProvider<SvmWalletProvider> {
       const transactionBuffer = Buffer.from(swapResponse.swapTransaction, "base64");
       const tx = VersionedTransaction.deserialize(transactionBuffer);
 
-      const signature = await walletProvider.signAndSendTransaction(tx);
+      const blockhash = tx.message.recentBlockhash
+      const lastValidBlockHeight = swapResponse.lastValidBlockHeight
 
-      await walletProvider.waitForSignatureResult(signature);
+      const signedTransaction = await walletProvider.signTransaction(tx);
+      const signature = await walletProvider.getConnection().sendTransaction(signedTransaction);
+
+      const confirmation = await walletProvider.getConnection().confirmTransaction({
+        signature,
+        blockhash, 
+        lastValidBlockHeight
+      });
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}\nhttps://solscan.io/tx/${signature}/`);
+    } else console.log(`Transaction successful: https://solscan.io/tx/${signature}/`);
 
       return `Successfully swapped ${args.amount} tokens! Signature: ${signature}`;
     } catch (error) {
