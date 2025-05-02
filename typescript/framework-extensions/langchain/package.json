@@ -1,6 +1,6 @@
 {
   "name": "@tokenomiapro/agentkit-langchain",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Langchain Toolkit extension of CDP Agentkit",
   "repository": "https://github.com/coinbase/agentkit",
   "author": "Coinbase Inc.",
