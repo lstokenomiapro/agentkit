@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { StructuredTool, tool } from "@langchain/core/tools";
-import { AgentKit, Action } from "@coinbase/agentkit";
+import { AgentKit, Action } from "@tokenomiapro/agentkit";
 
 /**
  * Get Langchain tools from an AgentKit instance
